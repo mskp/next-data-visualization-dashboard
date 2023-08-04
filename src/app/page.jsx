@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import Country from "@/components/Country"
 import Histogram from "@/components/Histogram";
 
-const serverHost = "http://localhost:8000";
+const serverHost = "https://dv-dash-api.vercel.app";
 
 export default function Home() {
   const [data, setData] = useState([]);
