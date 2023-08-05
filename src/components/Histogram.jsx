@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 
 const Histogram = ({ data, title }) => {
   const svgRef = useRef(null);
+  data.sort((a, b) => a - b);
 
   useEffect(() => {
     if (data.length === 0) return;
@@ -10,18 +11,21 @@ const Histogram = ({ data, title }) => {
     const svg = d3.select(svgRef.current);
     const container = svg.node().closest('div');
     const containerWidth = container.clientWidth;
-    const containerHeight = containerWidth * 0.6; // Maintain an aspect ratio
-    const margin = { top: 40, right: 30, bottom: 70, left: 70 };
+    const containerHeight = containerWidth * 0.6;
+    const margin = { top: 40, right: 30, bottom: 40, left: 40 };
     const width = containerWidth - margin.left - margin.right;
     const height = containerHeight - margin.top - margin.bottom;
 
-    const x = d3.scaleLinear().domain(d3.extent(data)).range([0, width]);
+    const x = d3.scaleBand().domain(data).range([0, width]).padding(0.1);
 
-    const bins = d3.histogram().domain(x.domain()).thresholds(x.ticks(20))(data);
+    const frequencies = data.reduce((acc, d) => {
+      acc[d] = (acc[d] || 0) + 1;
+      return acc;
+    }, {});
 
     const y = d3
       .scaleLinear()
-      .domain([0, Math.min(1000, d3.max(bins, (d) => d.length))])
+      .domain([0, Math.min(1000, d3.max(Object.values(frequencies)))])
       .range([height, 0]);
 
     const xAxis = d3.axisBottom(x);
@@ -30,18 +34,22 @@ const Histogram = ({ data, title }) => {
     svg.selectAll('*').remove();
 
     svg
-      .attr('width', containerWidth)
-      .attr('height', containerHeight)
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('viewBox', `0 0 ${containerWidth} ${containerHeight}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet')
+
+    svg
       .append('g')
       .attr('transform', `translate(${margin.left}, ${margin.top})`)
       .selectAll('rect')
-      .data(bins)
+      .data(data)
       .enter()
       .append('rect')
-      .attr('x', (d) => x(d.x0) + 1)
-      .attr('width', (d) => Math.max(0, x(d.x1) - x(d.x0) - 1))
-      .attr('y', (d) => y(d.length))
-      .attr('height', (d) => y(0) - y(d.length))
+      .attr('x', (d) => x(d))
+      .attr('width', x.bandwidth())
+      .attr('y', (d) => y(frequencies[d]))
+      .attr('height', (d) => y(0) - y(frequencies[d]))
       .attr('fill', 'steelblue');
 
     svg
@@ -59,7 +67,6 @@ const Histogram = ({ data, title }) => {
       .attr('transform', `translate(${margin.left}, ${margin.top})`)
       .call(yAxis);
 
-    // Add titles
     svg
       .append('text')
       .attr('x', width / 2 + margin.left)
@@ -69,19 +76,10 @@ const Histogram = ({ data, title }) => {
       .style('fill', 'white')
       .text(title);
 
-    svg
-      .append('text')
-      .attr('transform', 'rotate(-90)')
-      .attr('x', -height / 2)
-      .attr('y', margin.left / 2)
-      .attr('text-anchor', 'middle')
-      .style('font-size', '14px')
-      .style('fill', 'white')
-      .text('Frequency');
-  }, [data, title]);
+  }, [data]);
 
   return (
-    <div className="p-4 rounded-lg shadow-lg max-w">
+    <div className="p-4 rounded-lg shadow-lg min-h-64">
       <svg ref={svgRef}></svg>
     </div>
   );
