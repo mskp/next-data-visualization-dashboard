@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
-const Histogram = ({ data, title }) => {
+export default function Histogram({ data, title }) {
   const svgRef = useRef(null);
-  data.sort((a, b) => a - b);
-
+  
   useEffect(() => {
-    if (data.length === 0) return;
+    const filteredData = data.filter(curr => curr !== "");
+    filteredData.sort((a, b) => a - b);
+    if (filteredData.length === 0) return;
 
     const svg = d3.select(svgRef.current);
     const container = svg.node().closest('div');
@@ -16,9 +17,9 @@ const Histogram = ({ data, title }) => {
     const width = containerWidth - margin.left - margin.right;
     const height = containerHeight - margin.top - margin.bottom;
 
-    const x = d3.scaleBand().domain(data).range([0, width]).padding(0.1);
+    const x = d3.scaleBand().domain(filteredData).range([0, width]).padding(0.1);
 
-    const frequencies = data.reduce((acc, d) => {
+    const frequencies = filteredData.reduce((acc, d) => {
       acc[d] = (acc[d] || 0) + 1;
       return acc;
     }, {});
@@ -43,7 +44,7 @@ const Histogram = ({ data, title }) => {
       .append('g')
       .attr('transform', `translate(${margin.left}, ${margin.top})`)
       .selectAll('rect')
-      .data(data)
+      .data(filteredData)
       .enter()
       .append('rect')
       .attr('x', (d) => x(d))
@@ -84,5 +85,3 @@ const Histogram = ({ data, title }) => {
     </div>
   );
 };
-
-export default Histogram;

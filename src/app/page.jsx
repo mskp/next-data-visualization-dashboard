@@ -15,9 +15,7 @@ export default function Home() {
   const [endYear, setEndYear] = useState([]);
   const [startYear, setStartYear] = useState([]);
 
-  useEffect(() => {
-    fetchData();
-  }, [])
+  useEffect(() => fetchData(), [])
 
   useEffect(() => {
     setIntensities(data.map(curr => curr.intensity));
